@@ -1,55 +1,66 @@
 import torch
 from torch import nn
-from chapter1 import data_download_and_load as ddad
 from torch.utils.data import DataLoader
-from sklearn.preprocessing import MinMaxScaler
+from chapter1 import data_download_and_load as ddal
+from utils import pltUtils as plt
+from sklearn_try.preprocessing import MinMaxScaler
 import pandas as pd
 
 class Linear_Reg( nn.Module ):
     def __init__( self, n_features ):
         super(Linear_Reg, self).__init__()
-        self.linear = nn.Linear(n_features,1)
+        self.linear = nn.Linear(n_features,1,bias=True)
 
     def forward( self, x ):
         y = self.linear(x)
         y = torch.squeeze( y )
         return y
 
+@torch.no_grad()
+def eva(dates,net,min,max):
+    net.eval()
+    X = torch.Tensor(dates[:,:-1])
+    y = dates[:,-1]
+    y_pred = net(X)
+    y_pred = anti_minMaxScaler(y_pred,min,max)
+    y = anti_minMaxScaler(y,min,max)
+    criterion = torch.nn.MSELoss()  # 平方差损失函数
+    loss = criterion(y_pred,torch.Tensor(y))
+    print(loss**0.5)
+    plt.drawLines([y,y_pred],['true','pred'])
+
 def preprocess(df):
     ss = MinMaxScaler()
     df = ss.fit_transform(df)
     df = pd.DataFrame(df)
-    return df
+    return df,ss.data_min_[-1],ss.data_max_[-1]
 
-def train( epochs = 20, batchSize = 32, lr = 0.005 ):
-    #读取数据
-    train_df, test_df = ddad.split_train_test_from_df(preprocess(ddad.loadBoston()))
-    len_features = train_df.shape[1]-1
-    net = Linear_Reg( len_features)
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.AdamW( net.parameters(), lr=lr,weight_decay=0.05)
+def anti_minMaxScaler(d,min,max):
+    '''
+        (x-min)/(max-min)
+    '''
+    return d*(max-min)+min
 
+def train( epochs = 20, batchSize = 16, lr = 0.01):
+
+    df,min,max = preprocess(ddal.loadBoston())
+    train_df, test_df = ddal.split_train_test_from_df(df,test_ratio=0.2)
+
+    net = Linear_Reg(train_df.shape[1]-1) # 初始化线性回归模型
+    criterion = torch.nn.MSELoss() #平方差损失函数
+    optimizer = torch.optim.SGD( net.parameters(), lr=lr) #随机梯度下降
+    net.train()
     for e in range(epochs):
-        all_lose = 0
         for datas in DataLoader(train_df.values, batch_size = batchSize, shuffle = True):
-            optimizer.zero_grad()
-            X = datas[:,:-1]
-            y = datas[:,-1]
-            y_hat = net( X )
-            loss = criterion(y_hat, y)
-            all_lose += loss
-            loss.backward()
-            optimizer.step()
-        print(y_hat)
-        print(y)
-        print('epoch {},avg_loss={:.4f}'.format(e,all_lose/(train_df.shape[0]//batchSize)))
-
-        # #评估模型
-        # if e % eva_per_epochs == 0:
-        #     p, r, acc = doEva(net, x_train, y_train)
-        #     print('train:p:{:.4f}, r:{:.4f}, acc:{:.4f}'.format(p, r, acc))
-        #     p, r, acc = doEva(net, x_test, y_test)
-        #     print('test:p:{:.4f}, r:{:.4f}, acc:{:.4f}'.format(p,r, acc))
+            optimizer.zero_grad() #梯度归0
+            X = datas[:,:-1] # 获取X
+            y = datas[:,-1] # 获取y
+            y_pred = net( X ) # 得到预测值y
+            loss = criterion(y_pred, y) #将预测的y与真实的y带入损失函数计算损失值
+            loss.backward() # 后向传播
+            optimizer.step() #更新所有参数
+        print('epoch {},loss={:.4f}'.format(e,loss))
+    eva(test_df.values,net,min,max)
 
 if __name__ == '__main__':
     train()

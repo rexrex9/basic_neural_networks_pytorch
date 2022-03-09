@@ -7,9 +7,9 @@ w2 = sympy.symbols("w2")
 b = sympy.symbols("b")
 y = sympy.symbols("y")
 
-y_pred=x1*w1+x2*w2+b
+y_pred = x1*w1+ x2*w2 + b
 l = (y_pred-y)**2
 
-dify = sympy.diff(l,w1)
+dify = sympy.diff(l,b)
 print(dify)
 

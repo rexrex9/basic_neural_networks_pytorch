@@ -1,10 +1,12 @@
 import pandas as pd
-from sklearn import datasets
+from sklearn import datasets #机器学习库
 from data_set import filepaths as fp
 from os import path as osp
 import numpy as np
 from utils import osUtils as ou
 import random
+
+
 
 BOSTON_CSV = osp.join(fp.BOSTON_DIR,'boston.csv')
 IRIS_CSV = osp.join(fp.IRIS_DIR,'iris.csv')
@@ -18,6 +20,7 @@ def sklearn_to_df(sklearn_dataset):
 def downloadBoston():
     boston = datasets.load_boston()
     df = sklearn_to_df(boston)
+    print(df)
     df.to_csv(BOSTON_CSV)
 
 def loadBoston():
@@ -28,12 +31,13 @@ def downloadIris():
     df = sklearn_to_df(iris)
     df.to_csv(IRIS_CSV)
 
+def loadIris():
+    return pd.read_csv(IRIS_CSV,index_col=0,dtype=np.float32)
+
 def split_train_test_from_df(df,test_ratio=0.2):
     test_df = df.sample(frac=test_ratio)
     train_df = df[~df.index.isin(test_df.index)]
     return train_df,test_df
-
-
 
 def readRecData( path = ML100K_TSV,test_ratio = 0.2 ):
     user_set,item_set=set(),set()
@@ -61,13 +65,7 @@ def readRecData( path = ML100K_TSV,test_ratio = 0.2 ):
 
 
 if __name__ == '__main__':
-    #downloadBoston()
-    downloadIris()
+    downloadBoston()
+
+    #downloadIris()
     # df = loadBoston()
-    # df.plot()
-    # # ss = StandardScaler()
-    # # df = ss.fit_transform(df)
-    # # print(df)
-    # #print(minMaxScalarToTarget(df))
-    # import matplotlib.pyplot as plt
-    # plt.show()
