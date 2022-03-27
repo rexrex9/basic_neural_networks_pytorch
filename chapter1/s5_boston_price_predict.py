@@ -3,7 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from chapter1 import data_download_and_load as ddal
 from utils import pltUtils as plt
-from sklearn_try.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 
 class Linear_Reg( nn.Module ):
