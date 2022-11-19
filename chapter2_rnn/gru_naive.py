@@ -1,37 +1,42 @@
-import torch
 from torch import nn
-from torch.nn import Parameter
+import torch
 
-class RNN_Cell(nn.Module):
+class GRU_Cell(nn.Module):
 
     def __init__(self, in_dim, hidden_dim ):
         '''
         :param in_dim: 输入向量的维度
         :param hidden_dim: 输出的隐藏层维度
         '''
-        super( RNN_Cell, self ).__init__()
-        self.Wx = Parameter( torch.randn( in_dim,hidden_dim) )
-        self.Wh =  Parameter(torch.randn( hidden_dim, hidden_dim ) )
-        self.b = Parameter( torch.randn( 1, hidden_dim ) )
+        super( GRU_Cell, self ).__init__()
+        self.rx_linear = nn.Linear(in_dim,hidden_dim)
+        self.rh_linear = nn.Linear(hidden_dim,hidden_dim)
+        self.zx_linear = nn.Linear(in_dim, hidden_dim)
+        self.zh_linear = nn.Linear(hidden_dim, hidden_dim)
+        self.hx_linear = nn.Linear(in_dim, hidden_dim)
+        self.hh_linear = nn.Linear(hidden_dim, hidden_dim)
 
     def forward(self,x,h_1):
         '''
         :param x:  输入的序列中第t个物品向量 [ batch_size, in_dim ]
-        :param h_1:  上一个单元输rnn出的隐藏向量 [ batch_size, hidden_dim ]]
+        :param h_1:  上一个GRU单元输出的隐藏向量 [ batch_size, hidden_dim ]]
         :return: h 当前层输出的隐藏向量 [ batch_size, hidden_dim ]
         '''
-        #[ batch_size, hidden_dim ]
-        h = torch.tanh( torch.matmul( x, self.Wx )+torch.matmul( h_1, self.Wh )+self.b )
+
+        r = torch.sigmoid(self.rx_linear(x)+self.rh_linear(h_1))
+        z = torch.sigmoid(self.zx_linear(x)+self.zh_linear(h_1))
+        h_ = torch.tanh(self.hx_linear(x)+self.hh_linear(r*h_1))
+        h = z*h_1+(1-z)*h_
         return h
 
 
-class RNN_Naive( nn.Module ):
+class GRU_Naive( nn.Module ):
 
     def __init__( self, in_dim, hidden_dim ):
-        super( RNN_Naive, self ).__init__( )
+        super( GRU_Naive, self ).__init__( )
         self.in_dim = in_dim
         self.hidden_dim = hidden_dim
-        self.rnn_cell = RNN_Cell( in_dim, hidden_dim )
+        self.rnn_cell = GRU_Cell( in_dim, hidden_dim )
 
     def forward( self, x ):
         '''
@@ -44,7 +49,7 @@ class RNN_Naive( nn.Module ):
         for seq_x in  x :
             if h==None:
                 #初始化第一层的输入h
-                h = torch.randn(x.shape[1], self.hidden_dim)
+                h = torch.randn( x.shape[1], self.hidden_dim )
             h = self.rnn_cell(seq_x, h )
             outs.append( torch.unsqueeze( h, dim=1 ) )
         outs = torch.cat( outs, dim=1 )
@@ -55,14 +60,12 @@ class RNN_Naive( nn.Module ):
 if __name__ == '__main__':
     x = torch.randn(24, 12)
     h = torch.randn(24,6)
-    rc = RNN_Cell(12,6)
+    rc = GRU_Cell(12,6)
     h = rc(x,h)
     print(h.shape)
 
-    rnn = RNN_Naive(12,6)
+    rnn = GRU_Naive(12,6)
     x = torch.randn(7,24,12)
     outs,h = rnn(x)
-    #print(outs,h)
     print(outs.shape)
     print(h.shape)
-

@@ -14,7 +14,6 @@ def getTrainAndTestSeqs(inPath, test_ratio=0.1):
     train = seqs[split_number:]
     return train, test, allItems
 
-
 def getTrainAndTestSeqsWithNeg(seqInPath, test_ratio=0.1):
     seqs = np.load(seqInPath)
 
@@ -31,8 +30,8 @@ def getTrainAndTestSeqsWithNeg(seqInPath, test_ratio=0.1):
 if __name__ == '__main__':
 
 
-    #train, test, allItems = getTrainAndTestSeqsWithNeg(fp.Ml_latest_small.SEQS_NEG)
-    #print(train)
+    train, test, allItems = getTrainAndTestSeqsWithNeg(fp.SEQS_NEG)
+    print(train)
 
 
     train,test,allItems = getTrainAndTestSeqs(fp.SEQS)
