@@ -44,9 +44,10 @@ class LSTM_Naive( nn.Module ):
 
     def forward( self, x ):
         '''
-        :param x: 输入的序列向量, 维度为 [ batch_size, seq_lens, dim ]
-        :return: outs: 所有RNN_Cell出的隐藏向量[ batch_size, seq_lens, dim ]
+        :param x: 输入的序列向量, 维度为 [  seq_lens,batch_size, dim ]
+        :return: outs: 所有RNN_Cell出的隐藏向量[  seq_lens, batch_size, dim ]
                  h: 最后一个RNN_Cell输出的隐藏向量[ batch_size, dim ]
+                 c: 最后一个LSTM_Cell输出代表长期记忆的隐藏向量[ batch_size, dim ]
         '''
         outs = []
         h,c = None,None
@@ -54,9 +55,9 @@ class LSTM_Naive( nn.Module ):
             if h==None: h = torch.randn( x.shape[1], self.hidden_dim )
             if c==None: c= torch.randn( x.shape[1], self.hidden_dim )
             h,c = self.rnn_cell(seq_x, h,c )
-            outs.append( torch.unsqueeze( h, dim=1 ) )
-        outs = torch.cat( outs, dim=1 )
-        return outs, h
+            outs.append( torch.unsqueeze( h, 0 ) )
+        outs = torch.cat( outs )
+        return outs, (h,c)
 
 
 
@@ -68,8 +69,9 @@ if __name__ == '__main__':
     h,c = rc(x,h,c)
     print(h.shape)
 
-    rnn =LSTM_Naive(12,6)
+    lstm =LSTM_Naive(12,6)
     x = torch.randn(7,24,12)
-    outs,h = rnn(x)
+    outs,(h,c) = lstm(x)
     print(outs.shape)
     print(h.shape)
+    print(c.shape)

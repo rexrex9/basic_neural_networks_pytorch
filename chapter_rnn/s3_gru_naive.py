@@ -40,9 +40,9 @@ class GRU_Naive( nn.Module ):
 
     def forward( self, x ):
         '''
-        :param x: 输入的序列向量, 维度为 [ batch_size, seq_lens, dim ]
-        :return: outs: 所有RNN_Cell出的隐藏向量[ batch_size, seq_lens, dim ]
-                 h: 最后一个RNN_Cell输出的隐藏向量[ batch_size, dim ]
+        :param x: 输入的序列向量, 维度为 [ seq_lens,batch_size, dim ]
+        :return: outs: 所有gru_Cell出的隐藏向量[ seq_lens, batch_size, dim ]
+                 h: 最后一个gru_Cell输出的隐藏向量[ batch_size, dim ]
         '''
         outs = []
         h = None
@@ -51,8 +51,8 @@ class GRU_Naive( nn.Module ):
                 #初始化第一层的输入h
                 h = torch.randn( x.shape[1], self.hidden_dim )
             h = self.rnn_cell(seq_x, h )
-            outs.append( torch.unsqueeze( h, dim=1 ) )
-        outs = torch.cat( outs, dim=1 )
+            outs.append( torch.unsqueeze( h, 0 ) )
+        outs = torch.cat( outs )
         return outs, h
 
 

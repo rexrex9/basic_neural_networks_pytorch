@@ -27,12 +27,15 @@ def getTrainAndTestSeqsWithNeg(seqInPath, test_ratio=0.1):
     train = seqs[split_number:]
     return train, test, allItems
 
+
+
+
 if __name__ == '__main__':
 
 
     train, test, allItems = getTrainAndTestSeqsWithNeg(fp.SEQS_NEG)
-    print(train)
+    print(train[0])
 
 
-    train,test,allItems = getTrainAndTestSeqs(fp.SEQS)
-    print(train)
+    #train,test,allItems = getTrainAndTestSeqs(fp.SEQS)
+    #print(train[:5])
