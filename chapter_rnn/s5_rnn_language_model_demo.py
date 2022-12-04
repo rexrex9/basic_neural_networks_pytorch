@@ -65,7 +65,7 @@ class RNNLM( nn.Module ):
     def dense_layer(self,in_features,out_features):
         return nn.Sequential(
             nn.Linear(in_features, out_features),
-            nn.Sigmoid())
+            nn.Tanh())
 
     def forward(self, x):
         # [batch_size, len_seqs, dim]
