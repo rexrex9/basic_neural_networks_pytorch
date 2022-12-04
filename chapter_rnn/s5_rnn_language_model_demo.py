@@ -1,3 +1,5 @@
+import os,sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from torch.utils.data import DataLoader
 from data_set import filepaths as fp
 #import jieba
