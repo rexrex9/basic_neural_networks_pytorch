@@ -12,4 +12,4 @@ CORPUS_DIR = os.path.join( ROOT,'Corpus')
 SEQS = os.path.join(ML100K_DIR, 'seqs.npy')
 SEQS_NEG = os.path.join(ML100K_DIR, 'seqsWithNeg.npy')
 
-JAY_LYRICS = os.path.join(CORPUS_DIR,'jay_lyrics.txt')
+SONG_CI_JSON = os.path.join(CORPUS_DIR,'songci300.json')

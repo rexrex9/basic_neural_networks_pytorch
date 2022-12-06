@@ -2,22 +2,27 @@ import os,sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from torch.utils.data import DataLoader
 from data_set import filepaths as fp
-#import jieba
 from tqdm import tqdm
 import numpy as np
 from torch import nn
 import torch
+import json
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
+def getSongsi():
+    with open(fp.SONG_CI_JSON,'r',encoding='utf-8') as f:
+        ds = json.load(f)
+    ls = []
+    [ls.extend(d['paragraphs']) for d in ds]
+    copurs = ''.join(ls)
+    return copurs
+
 class Tokenizer():
 
-    def __init__(self,path):
-        with open(path,'r',encoding='utf-8') as f:
-            docs = f.read()
-            docs = docs.replace('\n', ',')
-        #all = list(jieba.cut(docs))
-        all = [c for c in docs]
+    def __init__(self,corpus):
+        all = [c for c in corpus]
 
         self.tokens = list(set(all))
         self.token_num = len(self.tokens)
@@ -55,19 +60,7 @@ class RNNLM( nn.Module ):
         self.hidden_size = hidden_size
         self.token_embs = nn.Embedding( n_items, in_dim, max_norm = 1 )
         self.rnn = nn.LSTM( in_dim, hidden_size, batch_first = True )
-        self.dense = self.dense_layer( hidden_size, n_items )
-
-    def grad_clipping(self, theta=1):
-        norm = torch.sqrt(sum(torch.sum((p.grad ** 2)) for p in self.parameters()))
-        if norm > theta:
-            for param in self.parameters():
-                param.grad[:] *= theta / norm
-
-    # 全连接层
-    def dense_layer(self,in_features,out_features):
-        return nn.Sequential(
-            nn.Linear(in_features, out_features),
-            nn.Tanh())
+        self.linear = nn.Linear( hidden_size, n_items )
 
     def forward(self, x):
         # [batch_size, len_seqs, dim]
@@ -77,40 +70,43 @@ class RNNLM( nn.Module ):
         # [batch_size*len_seqs, out_size]
         outs = outs.reshape(-1,self.hidden_size )
         #[batch_size*len_seqs, out_size]
-        out = self.dense(outs)
+        out = self.linear(outs)
         return out
 
     def predict(self,x):
         token_embs = self.token_embs(x)
         _, (h,c) = self.rnn(token_embs)
         h = torch.squeeze(h)
-        out = self.dense(h)
+        out = self.linear(h)
         return out
 
 def predict(s,tokenizer,net):
     tokenids = tokenizer.sentences2tokens(s)
-    tokenids = torch.LongTensor(tokenids)
+    tokenids = torch.LongTensor(tokenids).to(device)
     logits = net.predict(tokenids)
-    out = np.argmax(logits.detach().numpy(),axis=0)
+    out = np.argmax(logits.detach().cpu().numpy(),axis=0)
     s = tokenizer.token2char(out)
     return s
 
 def generate(s,lens,tokenizer,net):
+    cs = s[:]
     for i in range(lens):
-        s+=predict(s,tokenizer,net)
+        c = predict(cs,tokenizer,net)
+        s+=c
+        cs+=c
+        cs=cs[1:]
     print(s)
 
-
-def train( epochs = 50, sens_len=3,batchSize = 512, lr = 0.01, rnn_hidden_size = 256, in_dim = 256 ):
-    tokenizer = Tokenizer(fp.JAY_LYRICS)
+def train( epochs = 50, sens_len=6,batchSize = 512, lr = 0.002, rnn_hidden_size = 64, in_dim = 64, per_epochs=10):
+    tokenizer = Tokenizer(getSongsi())
     seqs = generalTrainData(tokenizer.tokenids,sens_len)
     net = RNNLM( tokenizer.token_num, rnn_hidden_size, in_dim).to(device)
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW( net.parameters(), lr=lr, weight_decay=5e-3)
+    optimizer = torch.optim.AdamW( net.parameters(), lr=lr)
     #开始训练
-    for e in range(epochs):
+    for e in tqdm(range(epochs)):
         loss=None
-        for seq in tqdm(DataLoader(seqs, batch_size = batchSize, shuffle = True)):
+        for seq in DataLoader(seqs, batch_size = batchSize, shuffle = True):
             x = torch.LongTensor(seq[:,0,:].detach().numpy()).to(device)
             y = torch.LongTensor(seq[:,1,:].detach().numpy()).to(device)
             optimizer.zero_grad()
@@ -118,10 +114,10 @@ def train( epochs = 50, sens_len=3,batchSize = 512, lr = 0.01, rnn_hidden_size =
             y = y.reshape(-1)
             loss = criterion(logits, y)
             loss.backward()
-            #net.grad_clipping()
             optimizer.step()
-        generate('想要有',30,tokenizer,net)
-        print('epoch {},avg_loss={:.4f}'.format(e, loss))
+        if e%per_epochs==0:
+            generate('翠禽枝上消魂',50,tokenizer,net)
+            print('epoch {},avg_loss={:.4f}'.format(e, loss))
 
 if __name__ == '__main__':
     train()

@@ -1,10 +1,23 @@
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, accuracy_score
 from torch.utils.data import DataLoader
-from chapter_rnn import dataload as dl
 import torch
 from torch import nn
 from data_set import filepaths as fp
+
+
+def getTrainAndTestSeqs(inPath, test_ratio=0.1):
+    seqs = np.load(inPath)
+    allItems = set()
+    for seq in seqs:
+        allItems|=set(seq[:-1])
+
+    np.random.shuffle(seqs)
+    split_number = int(len(seqs)*test_ratio)
+    test = seqs[:split_number]
+    train = seqs[split_number:]
+    return train, test, allItems
+
 
 class RNN_rec( nn.Module ):
 
@@ -23,9 +36,9 @@ class RNN_rec( nn.Module ):
 
     def forward(self, x):
         # [batch_size, len_seqs, dim]
-        item_embs = self.items(x)
+        seq_item_embs = self.items(x)
         # [1, batch_size, hidden_size]
-        _,h = self.rnn(item_embs)
+        _,h = self.rnn(seq_item_embs)
         # [batch_size, hidden_size]
         h = torch.squeeze(h)
         #[batch_size, 1]
@@ -48,8 +61,8 @@ def doEva(net,test_triple):
     acc = accuracy_score(y, y_pred)
     return precision,recall,acc
 
-def train( epochs = 10, batchSize = 1024, lr = 0.001, rnn_hidden_size = 64, dim = 128, eva_per_epochs = 1 ):
-    train,test,allItems = dl.getTrainAndTestSeqs(fp.SEQS)
+def train( epochs = 10, batchSize = 1024, lr = 0.001, rnn_hidden_size = 64, dim = 128 ):
+    train,test,allItems = getTrainAndTestSeqs(fp.SEQS)
     net = RNN_rec( max(allItems)+1, rnn_hidden_size, dim)
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.AdamW( net.parameters(), lr=lr, weight_decay=5e-3)
@@ -65,13 +78,16 @@ def train( epochs = 10, batchSize = 1024, lr = 0.001, rnn_hidden_size = 64, dim 
             loss.backward()
             optimizer.step()
         print('epoch {},avg_loss={:.4f}'.format(e,loss))
-
-        #评估模型
-        if e % eva_per_epochs == 0:
-            p, r, acc = doEva(net, train)
-            print('train:p:{:.4f}, r:{:.4f}, acc:{:.4f}'.format(p, r, acc))
-            p, r, acc = doEva(net, test)
-            print('test:p:{:.4f}, r:{:.4f}, acc:{:.4f}'.format(p,r, acc))
+        p, r, acc = doEva(net, train)
+        print('train:p:{:.4f}, r:{:.4f}, acc:{:.4f}'.format(p, r, acc))
+        p, r, acc = doEva(net, test)
+        print('test:p:{:.4f}, r:{:.4f}, acc:{:.4f}'.format(p,r, acc))
 
 if __name__ == '__main__':
+    # train,test,allItems = getTrainAndTestSeqs(fp.SEQS)
+    # print(train[:10])
+    #
+    # sss
+
+
     train()
