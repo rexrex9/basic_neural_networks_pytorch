@@ -121,4 +121,3 @@ def train( epochs = 50, sens_len=6,batchSize = 512, lr = 0.002, rnn_hidden_size 
 
 if __name__ == '__main__':
     train()
-
