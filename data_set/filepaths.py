@@ -13,3 +13,4 @@ SEQS = os.path.join(ML100K_DIR, 'seqs.npy')
 SEQS_NEG = os.path.join(ML100K_DIR, 'seqsWithNeg.npy')
 
 SONG_CI_JSON = os.path.join(CORPUS_DIR,'songci300.json')
+MNIST = os.path.join(ROOT,'mnist')
