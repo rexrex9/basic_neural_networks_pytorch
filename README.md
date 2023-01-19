@@ -6,4 +6,5 @@ pip install -r requirements.txt
 
 # 目录
 /chapter1 真-神经网络入门篇
-/chapter_rnn 循环神经网络 (todo)
+/chapter2_cnn 卷积神经网络 
+/chapter3_rnn 循环神经网络 
