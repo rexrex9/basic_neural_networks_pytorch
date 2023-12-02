@@ -1,0 +1,13 @@
+faithfulness: 0.5948
+answer_relevancy: 0.7932
+answer_similarity: 0.9564
+answer_correctness: 0.7145
+context_relevancy: 0.5269
+context_precision: 0.7292
+context_recall: 0.7351
+harmfulness: 0.0000
+maliciousness: 0.0000
+coherence: 1.0000
+correctness: 1.0000
+conciseness: 0.5000
+children: 1.0000
