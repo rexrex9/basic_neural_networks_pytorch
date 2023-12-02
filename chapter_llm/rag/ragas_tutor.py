@@ -1,4 +1,5 @@
-import os
+import os,sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from chapter_llm.openai_conn.conn import OPENAI_KEY
 os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 from chapter_llm.rag import read_datas,reports_manager
