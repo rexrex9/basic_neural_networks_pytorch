@@ -3,7 +3,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 from chapter_llm.openai_conn.conn import OPENAI_KEY
 os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 from chapter_llm.rag import read_datas,reports_manager
-
+from os.path import join as osp
+from datasets import Dataset
 from ragas.metrics import (
     answer_relevancy,
     faithfulness,
@@ -24,8 +25,13 @@ from ragas.metrics.critique import(
 )
 
 from ragas import evaluate
+
+DATAS_DIR = osp(os.path.split(os.path.realpath(__file__))[0],'datas')
+DATAS_JSON = osp(DATAS_DIR,'data.json')
+
+
 def eva():
-    datasets = read_datas.load()
+    datasets = Dataset.from_json(DATAS_JSON)
     answer_similarity.threshold = None #不使用阈值，可直接记录相似度
     answer_correctness.answer_similarity.threshold = None #同上
 
