@@ -10,6 +10,4 @@ y = sympy.symbols("y")
 y_pred = x1*w1+ x2*w2 + b
 l = (y_pred-y)**2
 
-dify = sympy.diff(l,b)
-print(dify)
-
+dify = sympy.diff(l,w1)
